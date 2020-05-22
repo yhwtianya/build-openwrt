@@ -60,16 +60,13 @@ jobs:
 
       - name: Update feeds
         run: |
-          cd
           git clone https://github.com/coolsnowwolf/lede.git
-          cd lede
+          mv lede/* ./
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
       - name: Generate configuration file
         run: |
-          cd
-          cd lede
           rm -f ./.config*
           touch ./.config
 
@@ -212,16 +209,12 @@ jobs:
 
       - name: Make download
         run: |
-          cd
-          cd lede
           make download -j8 || make download -j1 V=s
           find ./dl/ -size -1024c -exec rm -f {} \;
           df -h
 
       - name: Compile firmware
         run: |
-          cd
-          cd lede
           make -j$(nproc) || make -j1 V=s
           echo "======================="
           echo "Space usage:"
@@ -229,12 +222,10 @@ jobs:
           df -h
           echo "======================="
           du -h ./ --max-depth=1
-          du -h /mnt/openwrt/ --max-depth=1
+          # du -h /mnt/openwrt/ --max-depth=1
 
       - name: Prepare artifact
         run: |
-          cd
-          cd lede
           find ./bin/targets/ -type d -name "packages" | xargs rm -rf {}
 
       - name: Upload config.seed
