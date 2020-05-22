@@ -34,8 +34,6 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@master
-        with:
-          ref: master
 
       - name: Space cleanup
         env:
@@ -59,13 +57,19 @@ jobs:
 
           df -h
 
+
       - name: Update feeds
         run: |
+          cd
+          git clone https://github.com/coolsnowwolf/lede.git
+          cd lede
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
       - name: Generate configuration file
         run: |
+          cd
+          cd lede
           rm -f ./.config*
           touch ./.config
 
@@ -108,6 +112,13 @@ jobs:
           # CONFIG_TARGET_x86_64=y
           # CONFIG_TARGET_x86_64_Generic=y
           # EOF
+
+          # 编译 RM2100
+          cat >> .config <<EOF
+          CONFIG_TARGET_ramips=y
+          CONFIG_TARGET_ramips_mt7621=y
+          CONFIG_TARGET_ramips_mt7621_DEVICE_xiaomi_redmi-router-ac2100=y
+          EOF
 
           # 固件压缩:
           # cat >> .config <<EOF
@@ -201,12 +212,16 @@ jobs:
 
       - name: Make download
         run: |
+          cd
+          cd lede
           make download -j8 || make download -j1 V=s
           find ./dl/ -size -1024c -exec rm -f {} \;
           df -h
 
       - name: Compile firmware
         run: |
+          cd
+          cd lede
           make -j$(nproc) || make -j1 V=s
           echo "======================="
           echo "Space usage:"
@@ -217,7 +232,10 @@ jobs:
           du -h /mnt/openwrt/ --max-depth=1
 
       - name: Prepare artifact
-        run: find ./bin/targets/ -type d -name "packages" | xargs rm -rf {}
+        run: |
+          cd
+          cd lede
+          find ./bin/targets/ -type d -name "packages" | xargs rm -rf {}
 
       - name: Upload config.seed
         uses: actions/upload-artifact@master
